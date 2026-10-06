@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hog & Mug | Order Food and Drinks</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Ccircle cx='52' cy='60' r='34' fill='%23f7a8b8'/%3E%3Cellipse cx='52' cy='70' rx='14' ry='10' fill='%23ef8aa2'/%3E%3Crect x='76' y='70' width='30' height='32' rx='6' fill='%235a3825'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --pink: #f7a8b8;
+    --pink-dark: #e07a93;
+    --brown: #5a3825;
+    --brown-light: #8a5a3c;
+    --cream: #fff8f0;
+    --card: #ffffff;
+    --text: #2e2019;
+    --muted: #7a6a60;
+    --line: #f0e2d6;
+    --shadow: 0 6px 20px rgba(90, 56, 37, 0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(255, 248, 240, 0.95);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 72px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.35rem; color: var(--brown); }
+  .brand svg { width: 48px; height: 48px; }
+  .nav-links { display: flex; gap: 26px; font-weight: 600; color: var(--brown-light); }
+  .nav-links a:hover { color: var(--pink-dark); }
+  .cart-btn {
+    position: relative; border: none; cursor: pointer;
+    background: var(--brown); color: #fff; font-weight: 700;
+    padding: 10px 18px; border-radius: 999px; font-size: 0.95rem;
+  }
+  .cart-btn:hover { background: var(--brown-light); }
+  .badge {
+    position: absolute; top: -6px; right: -6px;
+    background: var(--pink-dark); color: #fff; font-size: 0.75rem;
+    min-width: 22px; height: 22px; border-radius: 11px;
+    display: grid; place-items: center; padding: 0 6px;
+  }
+
+  /* Hero */
+  .hero { padding: 64px 0 48px; }
+  .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
+  .tag { display: inline-block; background: #fde3e9; color: var(--pink-dark); font-weight: 700; font-size: 0.85rem; padding: 6px 14px; border-radius: 999px; margin-bottom: 16px; }
+  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.1; color: var(--brown); margin-bottom: 16px; }
+  .hero h1 span { color: var(--pink-dark); }
+  .hero p { color: var(--muted); font-size: 1.1rem; max-width: 480px; margin-bottom: 28px; }
+  .btn {
+    display: inline-block; border: none; cursor: pointer; font-weight: 700;
+    padding: 14px 28px; border-radius: 999px; font-size: 1rem;
+    background: var(--pink-dark); color: #fff; transition: transform .15s, background .15s;
+  }
+  .btn:hover { background: #c9627c; transform: translateY(-2px); }
+  .btn.ghost { background: transparent; color: var(--brown); border: 2px solid var(--brown); margin-left: 10px; }
+  .btn.ghost:hover { background: var(--brown); color: #fff; }
+  .hero-logo {
+    background: radial-gradient(circle at 50% 45%, #fde3e9 0%, #fbd0da 55%, transparent 56%);
+    display: grid; place-items: center; aspect-ratio: 1;
+  }
+  .hero-logo svg { width: 78%; height: auto; filter: drop-shadow(0 12px 18px rgba(90,56,37,.18)); }
+  .perks { display: flex; gap: 28px; margin-top: 34px; flex-wrap: wrap; }
+  .perk strong { display: block; font-size: 1.3rem; color: var(--brown); }
+  .perk span { color: var(--muted); font-size: 0.9rem; }
+
+  /* Menu */
+  section.menu { padding: 48px 0 72px; }
+  .section-head { text-align: center; margin-bottom: 28px; }
+  .section-head h2 { font-size: 2.1rem; color: var(--brown); }
+  .section-head p { color: var(--muted); }
+  .tabs { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
+  .tab {
+    border: 2px solid var(--line); background: #fff; color: var(--brown-light);
+    padding: 8px 20px; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: 0.95rem;
+  }
+  .tab.active, .tab:hover { background: var(--brown); border-color: var(--brown); color: #fff; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 22px; }
+  .item {
+    background: var(--card); border-radius: 18px; box-shadow: var(--shadow);
+    overflow: hidden; display: flex; flex-direction: column; transition: transform .15s;
+  }
+  .item:hover { transform: translateY(-4px); }
+  .item .pic { height: 130px; display: grid; place-items: center; font-size: 4rem; }
+  .item .body { padding: 16px 18px 18px; display: flex; flex-direction: column; flex: 1; }
+  .item h3 { font-size: 1.1rem; color: var(--brown); }
+  .item p { color: var(--muted); font-size: 0.9rem; flex: 1; margin: 4px 0 14px; }
+  .item .row { display: flex; justify-content: space-between; align-items: center; }
+  .price { font-weight: 800; font-size: 1.15rem; color: var(--pink-dark); }
+  .add {
+    border: none; cursor: pointer; background: var(--brown); color: #fff;
+    font-weight: 700; padding: 8px 16px; border-radius: 999px;
+  }
+  .add:hover { background: var(--pink-dark); }
+
+  /* About / How */
+  .how { background: var(--brown); color: #fff; padding: 64px 0; }
+  .how h2 { text-align: center; font-size: 2rem; margin-bottom: 36px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .step { background: rgba(255,255,255,0.08); border-radius: 18px; padding: 26px; text-align: center; }
+  .step .num { width: 46px; height: 46px; border-radius: 50%; background: var(--pink); color: var(--brown); font-weight: 800; display: grid; place-items: center; margin: 0 auto 14px; font-size: 1.2rem; }
+  .step p { color: #ead9cc; font-size: 0.95rem; }
+
+  /* Footer */
+  footer { padding: 40px 0; border-top: 1px solid var(--line); }
+  .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; color: var(--muted); font-size: 0.9rem; }
+
+  /* Cart drawer */
+  .overlay { position: fixed; inset: 0; background: rgba(46,32,25,.45); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(400px, 100%);
+    background: var(--cream); z-index: 40; transform: translateX(100%); transition: transform .25s;
+    display: flex; flex-direction: column; box-shadow: -8px 0 24px rgba(0,0,0,.15);
+  }
+  .drawer.show { transform: translateX(0); }
+  .drawer-head { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--line); }
+  .drawer-head h3 { color: var(--brown); font-size: 1.3rem; }
+  .close { border: none; background: none; font-size: 1.6rem; cursor: pointer; color: var(--brown); }
+  .cart-items { flex: 1; overflow-y: auto; padding: 12px 20px; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+  .line { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .line .emo { font-size: 1.8rem; }
+  .line .info { flex: 1; }
+  .line .info strong { display: block; color: var(--brown); font-size: 0.95rem; }
+  .line .info span { color: var(--muted); font-size: 0.85rem; }
+  .qty { display: flex; align-items: center; gap: 8px; }
+  .qty button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); background: #fff; cursor: pointer; font-weight: 800; color: var(--brown); }
+  .drawer-foot { padding: 20px; border-top: 1px solid var(--line); background: #fff; }
+  .totals div { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--muted); }
+  .totals .grand { color: var(--brown); font-weight: 800; font-size: 1.15rem; }
+  .checkout { width: 100%; margin-top: 12px; }
+  .checkout:disabled { background: #cbbbb0; cursor: not-allowed; transform: none; }
+
+  /* Checkout modal */
+  .modal {
+    position: fixed; inset: 0; z-index: 50; display: none; place-items: center; padding: 16px;
+    background: rgba(46,32,25,.55);
+  }
+  .modal.show { display: grid; }
+  .modal-box { background: #fff; border-radius: 20px; padding: 28px; width: min(440px, 100%); max-height: 92vh; overflow-y: auto; }
+  .modal-box h3 { color: var(--brown); margin-bottom: 16px; font-size: 1.4rem; }
+  label { display: block; font-weight: 600; font-size: 0.9rem; color: var(--brown-light); margin: 10px 0 4px; }
+  input, select, textarea {
+    width: 100%; padding: 10px 12px; border: 2px solid var(--line); border-radius: 10px;
+    font: inherit; background: var(--cream);
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--pink); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-actions .btn { flex: 1; margin: 0; }
+  .success { text-align: center; }
+  .success svg { width: 110px; margin-bottom: 10px; }
+  .success p { color: var(--muted); margin-bottom: 18px; }
+
+  /* Account menu */
+  .nav-actions { display: flex; align-items: center; gap: 10px; }
+  .acct { position: relative; }
+  .acct-btn {
+    border: 2px solid var(--brown); background: transparent; color: var(--brown);
+    font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-size: 0.95rem;
+    max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .acct-btn:hover { background: var(--brown); color: #fff; }
+  .acct { display: flex; gap: 8px; }
+  .signup-btn {
+    border: none; background: var(--pink-dark); color: #fff; font-weight: 700;
+    padding: 10px 18px; border-radius: 999px; cursor: pointer; font-size: 0.95rem; white-space: nowrap;
+  }
+  .signup-btn:hover { background: #c9627c; }
+  .switch { text-align: center; margin-top: 14px; font-size: 0.9rem; color: var(--muted); }
+  .switch a { color: var(--pink-dark); font-weight: 700; cursor: pointer; }
+  .join { margin-top: 18px; color: var(--muted); }
+  .join a { color: var(--pink-dark); font-weight: 700; cursor: pointer; text-decoration: underline; }
+  .acct-menu {
+    position: absolute; right: 0; top: calc(100% + 8px); background: #fff; border-radius: 14px;
+    box-shadow: var(--shadow); min-width: 210px; padding: 8px; display: none; z-index: 25;
+    border: 1px solid var(--line);
+  }
+  .acct-menu.show { display: block; }
+  .acct-menu .who { padding: 8px 12px 10px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+  .acct-menu .who strong { display: block; color: var(--brown); }
+  .acct-menu .who span { color: var(--muted); font-size: 0.85rem; word-break: break-all; }
+  .acct-menu button {
+    display: block; width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+    padding: 10px 12px; border-radius: 8px; font: inherit; color: var(--text);
+  }
+  .acct-menu button:hover { background: var(--cream); color: var(--pink-dark); }
+
+  /* Auth + account modals */
+  .auth-tabs { display: flex; background: var(--cream); border-radius: 999px; padding: 4px; margin-bottom: 14px; }
+  .auth-tabs button {
+    flex: 1; border: none; background: none; padding: 8px; border-radius: 999px; cursor: pointer;
+    font-weight: 700; color: var(--brown-light); font-size: 0.95rem;
+  }
+  .auth-tabs button.active { background: var(--brown); color: #fff; }
+  .notice { background: #fde3e9; color: #a8455d; padding: 10px 12px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 6px; }
+  .form-err { color: #b3261e; font-size: 0.9rem; min-height: 1.2em; margin-top: 8px; }
+  .hint { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+  .signed-in { background: var(--cream); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; color: var(--muted); }
+  .signed-in strong { color: var(--brown); }
+  .acct-section { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .acct-section h4 { color: var(--brown); margin-bottom: 4px; }
+  .order-row { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+  .order-row .top { display: flex; justify-content: space-between; gap: 8px; }
+  .order-row .top strong { color: var(--brown); }
+  .order-row small { color: var(--muted); display: block; }
+  .pill { font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #fde3e9; color: #a8455d; white-space: nowrap; height: fit-content; }
+  .pill.completed { background: #e3f1dc; color: #3d6b2a; }
+  .pill.cancelled { background: #eee; color: #777; }
+  .small-btn { padding: 10px 18px; font-size: 0.9rem; margin-top: 12px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(120px);
+    background: var(--brown); color: #fff; padding: 12px 22px; border-radius: 999px;
+    font-weight: 600; z-index: 60; transition: transform .25s;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 820px) {
+    .hero-grid { grid-template-columns: 1fr; text-align: center; }
+    .hero p { margin-left: auto; margin-right: auto; }
+    .perks { justify-content: center; }
+    .hero-logo { max-width: 320px; margin: 0 auto; order: -1; }
+    .nav-links { display: none; }
+    .steps { grid-template-columns: 1fr; }
+    .btn.ghost { margin-left: 0; margin-top: 10px; }
+    .brand { font-size: 1.1rem; }
+    .acct-btn { max-width: 110px; padding: 7px 10px; font-size: 0.85rem; }
+    .signup-btn, .cart-btn { padding: 8px 12px; font-size: 0.85rem; }
+    .nav-actions { gap: 6px; }
+  }
+  @media (max-width: 480px) {
+    .brand span.name { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Logo: pig holding a hot cup (reusable SVG symbol) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 126 120">
+    <!-- steam -->
+    <path d="M84 40c-4-5 4-8 0-14M93 40c-4-5 4-8 0-14M102 40c-4-5 4-8 0-14" fill="none" stroke="#b9a090" stroke-width="3" stroke-linecap="round"/>
+    <!-- ears -->
+    <path d="M26 34 L22 12 L42 26 Z" fill="#ef8aa2"/>
+    <path d="M66 26 L84 14 L78 36 Z" fill="#ef8aa2"/>
+    <!-- head -->
+    <circle cx="52" cy="58" r="34" fill="#f7a8b8"/>
+    <!-- cheeks -->
+    <circle cx="30" cy="70" r="6" fill="#f48aa1" opacity=".55"/>
+    <!-- eyes -->
+    <circle cx="40" cy="50" r="4.5" fill="#2e2019"/>
+    <circle cx="62" cy="50" r="4.5" fill="#2e2019"/>
+    <circle cx="41.5" cy="48.5" r="1.4" fill="#fff"/>
+    <circle cx="63.5" cy="48.5" r="1.4" fill="#fff"/>
+    <!-- snout -->
+    <ellipse cx="51" cy="68" rx="14" ry="10" fill="#ef8aa2"/>
+    <ellipse cx="46" cy="68" rx="2.6" ry="3.6" fill="#a8455d"/>
+    <ellipse cx="56" cy="68" rx="2.6" ry="3.6" fill="#a8455d"/>
+    <!-- cup -->
+    <path d="M110 70 q10 0 10 10 q0 10 -10 10" fill="none" stroke="#5a3825" stroke-width="5"/>
+    <path d="M76 46 h36 l-4 50 q-1 6 -7 6 h-14 q-6 0 -7 -6 Z" fill="#5a3825"/>
+    <rect x="74" y="42" width="40" height="7" rx="3.5" fill="#8a5a3c"/>
+    <path d="M82 66 h24" stroke="#f7a8b8" stroke-width="4" stroke-linecap="round"/>
+    <!-- hoof holding cup -->
+    <ellipse cx="78" cy="80" rx="9" ry="7" fill="#f7a8b8" stroke="#ef8aa2" stroke-width="2"/>
+  </symbol>
+</svg>
+
+<header>
+  <div class="wrap nav">
+    <a href="#" class="brand"><svg viewBox="0 0 126 120"><use href="#logo"/></svg> <span class="name">Hog &amp; Mug</span></a>
+    <nav class="nav-links">
+      <a href="#menu">Menu</a>
+      <a href="#how">How it works</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="nav-actions">
+      <div class="acct">
+        <button class="acct-btn" id="acctBtn">Log in</button>
+        <button class="signup-btn" id="signupBtn">Sign up</button>
+        <div class="acct-menu" id="acctMenu">
+          <div class="who"><strong id="menuName"></strong><span id="menuEmail"></span></div>
+          <button data-action="account">👤 My account</button>
+          <button data-action="orders">🧾 My orders</button>
+          <button data-action="logout">↪ Log out</button>
+        </div>
+      </div>
+      <button class="cart-btn" id="openCart">Cart <span class="badge" id="badge">0</span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="tag">Fresh food &amp; hot drinks</span>
+        <h1>Comfort food and <span>cozy cups</span>, delivered.</h1>
+        <p>Hearty meals, warm pastries and handcrafted drinks, made to order and brought to your door.</p>
+        <a href="#menu" class="btn">Order now</a>
+        <a href="#how" class="btn ghost">How it works</a>
+        <p class="join" id="joinLine">New here? <a data-auth="register">Create a free account</a> to place orders. Already a member? <a data-auth="login">Log in</a></p>
+        <div class="perks">
+          <div class="perk"><strong>30 min</strong><span>Average delivery</span></div>
+          <div class="perk"><strong>Free</strong><span>Delivery over ₱500</span></div>
+          <div class="perk"><strong>7am–10pm</strong><span>Open daily</span></div>
+        </div>
+      </div>
+      <div class="hero-logo"><svg viewBox="0 0 126 120" role="img" aria-label="Hog & Mug logo: a pig holding a hot cup"><use href="#logo"/></svg></div>
+    </div>
+  </section>
+
+  <section class="menu" id="menu">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Our Menu</h2>
+        <p>Pick your favorites and add them to your cart.</p>
+      </div>
+      <div class="tabs" id="tabs"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <div class="wrap">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step"><div class="num">1</div><h3>Choose</h3><p>Browse the menu and add food and drinks to your cart.</p></div>
+        <div class="step"><div class="num">2</div><h3>Checkout</h3><p>Enter your details and pick delivery or pickup.</p></div>
+        <div class="step"><div class="num">3</div><h3>Enjoy</h3><p>We prepare it fresh and get it to you hot.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="contact">
+  <div class="wrap foot">
+    <a href="#" class="brand"><svg viewBox="0 0 126 120"><use href="#logo"/></svg> Hog &amp; Mug</a>
+    <div>📍 123 Sample Street, Manila &nbsp;·&nbsp; 📞 (02) 1234 5678 &nbsp;·&nbsp; hello@hogandmug.example</div>
+    <div>© <span id="year"></span> Hog &amp; Mug</div>
+  </div>
+</footer>
+
+<!-- Cart drawer -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Shopping cart">
+  <div class="drawer-head">
+    <h3>Your order</h3>
+    <button class="close" id="closeCart" aria-label="Close cart">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="drawer-foot">
+    <div class="totals">
+      <div><span>Subtotal</span><span id="subtotal">₱0</span></div>
+      <div><span>Delivery</span><span id="delivery">₱0</span></div>
+      <div class="grand"><span>Total</span><span id="total">₱0</span></div>
+    </div>
+    <button class="btn checkout" id="checkoutBtn" disabled>Checkout</button>
+  </div>
+</aside>
+
+<!-- Checkout modal -->
+<div class="modal" id="modal">
+  <div class="modal-box" id="modalBox">
+    <form id="orderForm">
+      <h3>Checkout</h3>
+      <div class="signed-in" id="signedIn"></div>
+      <label for="name">Full name</label>
+      <input id="name" required>
+      <label for="phone">Phone</label>
+      <input id="phone" type="tel" required>
+      <label for="method">Order type</label>
+      <select id="method">
+        <option value="delivery">Delivery</option>
+        <option value="pickup">Pickup</option>
+      </select>
+      <div id="addrWrap">
+        <label for="address">Delivery address</label>
+        <textarea id="address" rows="2"></textarea>
+      </div>
+      <label for="pay">Payment</label>
+      <select id="pay">
+        <option>Cash on delivery</option>
+        <option>GCash</option>
+        <option>Card</option>
+      </select>
+      <label for="notes">Notes (optional)</label>
+      <input id="notes" placeholder="e.g. less sugar, no onions">
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="cancelOrder">Back</button>
+        <button type="submit" class="btn" id="placeBtn">Place order</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Login / Sign up modal -->
+<div class="modal" id="authModal">
+  <div class="modal-box">
+    <div class="auth-tabs">
+      <button type="button" data-tab="login" class="active">Log in</button>
+      <button type="button" data-tab="register">Sign up</button>
+    </div>
+    <div class="notice" id="authNotice" hidden></div>
+
+    <form id="loginForm">
+      <label for="loginEmail">Email</label>
+      <input id="loginEmail" type="email" autocomplete="email" required>
+      <label for="loginPass">Password</label>
+      <input id="loginPass" type="password" autocomplete="current-password" required>
+      <div class="form-err" id="loginErr"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close="authModal">Cancel</button>
+        <button type="submit" class="btn">Log in</button>
+      </div>
+      <p class="switch">Don't have an account? <a data-tab-link="register">Sign up</a></p>
+    </form>
+
+    <form id="registerForm" hidden>
+      <label for="regName">Full name</label>
+      <input id="regName" autocomplete="name" required>
+      <label for="regEmail">Email</label>
+      <input id="regEmail" type="email" autocomplete="email" required>
+      <label for="regPhone">Phone</label>
+      <input id="regPhone" type="tel" autocomplete="tel" required>
+      <label for="regPass">Password</label>
+      <input id="regPass" type="password" autocomplete="new-password" minlength="8" required>
+      <div class="hint">At least 8 characters.</div>
+      <div class="form-err" id="regErr"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close="authModal">Cancel</button>
+        <button type="submit" class="btn">Create account</button>
+      </div>
+      <p class="switch">Already have an account? <a data-tab-link="login">Log in</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- My account modal -->
+<div class="modal" id="accountModal">
+  <div class="modal-box">
+    <h3>My account</h3>
+    <form id="profileForm">
+      <label for="accName">Full name</label>
+      <input id="accName" required>
+      <label for="accEmail">Email</label>
+      <input id="accEmail" disabled>
+      <label for="accPhone">Phone</label>
+      <input id="accPhone" type="tel" required>
+      <label for="accAddress">Default delivery address</label>
+      <textarea id="accAddress" rows="2"></textarea>
+      <div class="form-err" id="profileErr"></div>
+      <button type="submit" class="btn small-btn">Save details</button>
+    </form>
+
+    <form id="passForm" class="acct-section">
+      <h4>Change password</h4>
+      <label for="curPass">Current password</label>
+      <input id="curPass" type="password" autocomplete="current-password" required>
+      <label for="newPass">New password</label>
+      <input id="newPass" type="password" autocomplete="new-password" minlength="8" required>
+      <div class="form-err" id="passErr"></div>
+      <button type="submit" class="btn small-btn">Update password</button>
+    </form>
+
+    <div class="acct-section" id="ordersSection">
+      <h4>My orders</h4>
+      <div id="myOrders"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" data-close="accountModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const peso = n => "₱" + Number(n).toLocaleString("en-PH");
+  const $ = id => document.getElementById(id);
+
+  let MENU = [];
+  let activeCat = "All";
+  let cartState = { items: [], count: 0, subtotal: 0, delivery: 0, total: 0 };
+
+  // ---- API helper ----
+  async function api(path, options = {}) {
+    let res;
+    try {
+      res = await fetch(path, {
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        ...options,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+    } catch {
+      // Network-level failure (Safari: "Load failed", Chrome: "Failed to fetch")
+      throw new Error(location.protocol === "file:"
+        ? "Open the site through the server at http://localhost:3000, not the file directly."
+        : "Can't reach the server. Check that it's running (node server.js) and try again.");
+    }
+    const isJson = (res.headers.get("content-type") || "").includes("application/json");
+    const data = isJson ? await res.json().catch(() => ({})) : {};
+    if (!isJson) throw Object.assign(new Error(
+      "The ordering server isn't answering on this address. Run node server.js and open http://localhost:3000."), { status: res.status });
+    if (!res.ok) throw Object.assign(new Error(data.error || "Something went wrong"), { status: res.status });
+    return data;
+  }
+  const orderType = () => ($("method") ? $("method").value : "delivery");
+  const q = () => "?method=" + orderType();
+
+  // ---- Menu ----
+  function renderTabs() {
+    const cats = ["All", ...new Set(MENU.map(m => m.cat))];
+    $("tabs").innerHTML = cats.map(c => `<button class="tab${c === activeCat ? " active" : ""}" data-cat="${c}">${c}</button>`).join("");
+  }
+  $("tabs").addEventListener("click", e => {
+    if (!e.target.dataset.cat) return;
+    activeCat = e.target.dataset.cat;
+    renderTabs(); renderMenu();
+  });
+
+  function renderMenu() {
+    const items = activeCat === "All" ? MENU : MENU.filter(m => m.cat === activeCat);
+    $("grid").innerHTML = items.map(m => `
+      <article class="item">
+        <div class="pic" style="background:${m.bg}">${m.emo}</div>
+        <div class="body">
+          <h3>${m.name}</h3>
+          <p>${m.desc}</p>
+          <div class="row">
+            <span class="price">${peso(m.price)}</span>
+            <button class="add" data-id="${m.id}">Add +</button>
+          </div>
+        </div>
+      </article>`).join("");
+  }
+
+  // Add to cart -> backend
+  $("grid").addEventListener("click", async e => {
+    const btn = e.target.closest(".add");
+    if (!btn) return;
+    btn.disabled = true;
+    try {
+      cartState = await api("/api/cart/items" + q(), { method: "POST", body: { id: Number(btn.dataset.id), qty: 1 } });
+      renderCart();
+      toast(`${MENU.find(m => m.id == btn.dataset.id).name} added`);
+    } catch (err) { toast(err.message); }
+    btn.disabled = false;
+  });
+
+  // ---- Cart ----
+  function renderCart() {
+    const c = cartState;
+    $("badge").textContent = c.count;
+    $("cartItems").innerHTML = c.items.length === 0
+      ? `<div class="empty">Your cart is empty.<br>Add something tasty!</div>`
+      : c.items.map(i => `<div class="line">
+            <span class="emo">${i.emo}</span>
+            <div class="info"><strong>${i.name}</strong><span>${peso(i.price)} each</span></div>
+            <div class="qty">
+              <button data-id="${i.id}" data-qty="${i.qty - 1}" aria-label="Decrease">−</button>
+              <span>${i.qty}</span>
+              <button data-id="${i.id}" data-qty="${i.qty + 1}" aria-label="Increase">+</button>
+            </div>
+          </div>`).join("");
+    $("subtotal").textContent = peso(c.subtotal);
+    $("delivery").textContent = c.delivery === 0 && c.subtotal > 0 ? "Free" : peso(c.delivery);
+    $("total").textContent = peso(c.total);
+    $("checkoutBtn").disabled = c.items.length === 0;
+  }
+
+  $("cartItems").addEventListener("click", async e => {
+    const b = e.target.closest("button[data-id]");
+    if (!b) return;
+    try {
+      cartState = await api(`/api/cart/items/${b.dataset.id}` + q(), { method: "PATCH", body: { qty: Number(b.dataset.qty) } });
+      renderCart();
+    } catch (err) { toast(err.message); }
+  });
+
+  async function refreshCart() {
+    try { cartState = await api("/api/cart" + q()); renderCart(); } catch (err) { toast(err.message); }
+  }
+
+  // ---- Drawer ----
+  const openCart = () => { $("drawer").classList.add("show"); $("overlay").classList.add("show"); };
+  const closeCart = () => { $("drawer").classList.remove("show"); $("overlay").classList.remove("show"); };
+  $("openCart").onclick = openCart;
+  $("closeCart").onclick = closeCart;
+  $("overlay").onclick = closeCart;
+
+  // ---- Checkout -> backend ----
+  const formHTML = $("modalBox").innerHTML;
+  function bindForm() {
+    $("method").onchange = () => {
+      $("addrWrap").style.display = orderType() === "pickup" ? "none" : "block";
+      refreshCart();
+    };
+    $("cancelOrder").onclick = () => $("modal").classList.remove("show");
+    $("orderForm").onsubmit = async e => {
+      e.preventDefault();
+      if (orderType() === "delivery" && !$("address").value.trim()) {
+        $("address").focus(); toast("Please enter a delivery address"); return;
+      }
+      const placeBtn = $("placeBtn");
+      placeBtn.disabled = true; placeBtn.textContent = "Placing…";
+      try {
+        const order = await api("/api/orders", {
+          method: "POST",
+          body: {
+            name: $("name").value, phone: $("phone").value, method: orderType(),
+            address: $("address").value, payment: $("pay").value, notes: $("notes").value,
+          },
+        });
+        const first = $("name").value.trim().split(" ")[0];
+        $("modalBox").innerHTML = `
+          <div class="success">
+            <svg viewBox="0 0 126 120"><use href="#logo"/></svg>
+            <h3>Thank you, ${first.replace(/[<>&"]/g, "")}!</h3>
+            <p>Order <strong>${order.orderNo}</strong> has been received.<br>Total: <strong>${peso(order.total)}</strong><br>You can follow it under <strong>My orders</strong>.</p>
+            <button class="btn" id="doneBtn">Back to menu</button>
+          </div>`;
+        $("doneBtn").onclick = () => {
+          $("modal").classList.remove("show");
+          $("modalBox").innerHTML = formHTML;
+          bindForm();
+          refreshCart();
+        };
+        cartState = { items: [], count: 0, subtotal: 0, delivery: 0, total: 0 };
+        renderCart();
+      } catch (err) {
+        placeBtn.disabled = false; placeBtn.textContent = "Place order";
+        if (err.status === 401) { // session expired or logged out elsewhere
+          setUser(null);
+          $("modal").classList.remove("show");
+          openAuth("login", "Your session has ended. Please log in again to place your order.", openCheckout);
+        } else toast(err.message);
+      }
+    };
+  }
+  // Checkout requires login
+  function openCheckout() {
+    closeCart();
+    $("signedIn").innerHTML = `Ordering as <strong>${esc(currentUser.name)}</strong> (${esc(currentUser.email)})`;
+    if (!$("name").value) $("name").value = currentUser.name;
+    if (!$("phone").value) $("phone").value = currentUser.phone;
+    if (!$("address").value) $("address").value = currentUser.address || "";
+    $("modal").classList.add("show");
+  }
+  $("checkoutBtn").onclick = () => {
+    if (currentUser) return openCheckout();
+    closeCart();
+    openAuth("login", "Please log in or create an account to place your order.", openCheckout);
+  };
+
+  // Close any modal by clicking the backdrop or a [data-close] button
+  document.querySelectorAll(".modal").forEach(m =>
+    m.addEventListener("click", e => { if (e.target === m) m.classList.remove("show"); }));
+  document.addEventListener("click", e => {
+    const id = e.target.dataset && e.target.dataset.close;
+    if (id) $(id).classList.remove("show");
+  });
+
+  // ---- Accounts ----
+  let currentUser = null;
+  let afterLogin = null; // what to do once the user logs in (e.g. continue to checkout)
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+  function setUser(user) {
+    currentUser = user;
+    $("acctBtn").textContent = user ? "👤 " + user.name.split(" ")[0] : "Log in";
+    $("signupBtn").hidden = !!user;
+    $("joinLine").hidden = !!user;
+    if (user) { $("menuName").textContent = user.name; $("menuEmail").textContent = user.email; }
+    $("acctMenu").classList.remove("show");
+  }
+
+  // Sign up / log in entry points
+  $("signupBtn").onclick = () => openAuth("register");
+  document.addEventListener("click", e => {
+    const a = e.target.closest("[data-auth]");
+    if (a) { e.preventDefault(); openAuth(a.dataset.auth); }
+    const t = e.target.closest("[data-tab-link]");
+    if (t) { e.preventDefault(); switchTab(t.dataset.tabLink); $("loginErr").textContent = $("regErr").textContent = ""; }
+  });
+  // Direct links: http://localhost:3000/#signup or /#login
+  function openFromHash() {
+    if (currentUser) return;
+    if (location.hash === "#signup" || location.hash === "#register") openAuth("register");
+    else if (location.hash === "#login") openAuth("login");
+  }
+  window.addEventListener("hashchange", openFromHash);
+
+  function openAuth(tab = "login", notice = "", then = null) {
+    afterLogin = then;
+    switchTab(tab);
+    $("authNotice").hidden = !notice;
+    $("authNotice").textContent = notice;
+    $("loginErr").textContent = $("regErr").textContent = "";
+    $("authModal").classList.add("show");
+    setTimeout(() => $(tab === "login" ? "loginEmail" : "regName").focus(), 50);
+  }
+  function switchTab(tab) {
+    document.querySelectorAll(".auth-tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    $("loginForm").hidden = tab !== "login";
+    $("registerForm").hidden = tab !== "register";
+  }
+  document.querySelector(".auth-tabs").addEventListener("click", e => { if (e.target.dataset.tab) switchTab(e.target.dataset.tab); });
+
+  function loggedIn(user, msg) {
+    setUser(user);
+    $("authModal").classList.remove("show");
+    $("loginForm").reset(); $("registerForm").reset();
+    toast(msg);
+    const next = afterLogin; afterLogin = null;
+    if (next) next();
+  }
+
+  $("loginForm").onsubmit = async e => {
+    e.preventDefault();
+    $("loginErr").textContent = "";
+    try {
+      const user = await api("/api/auth/login", { method: "POST", body: { email: $("loginEmail").value, password: $("loginPass").value } });
+      loggedIn(user, `Welcome back, ${user.name.split(" ")[0]}!`);
+    } catch (err) { $("loginErr").textContent = err.message; }
+  };
+
+  $("registerForm").onsubmit = async e => {
+    e.preventDefault();
+    $("regErr").textContent = "";
+    try {
+      const user = await api("/api/auth/register", { method: "POST", body: {
+        name: $("regName").value, email: $("regEmail").value, phone: $("regPhone").value, password: $("regPass").value } });
+      loggedIn(user, `Account created. Welcome, ${user.name.split(" ")[0]}!`);
+    } catch (err) { $("regErr").textContent = err.message; }
+  };
+
+  // Header account button / dropdown
+  $("acctBtn").onclick = e => {
+    e.stopPropagation();
+    if (!currentUser) return openAuth("login");
+    $("acctMenu").classList.toggle("show");
+  };
+  document.addEventListener("click", e => { if (!e.target.closest(".acct")) $("acctMenu").classList.remove("show"); });
+  $("acctMenu").addEventListener("click", async e => {
+    const action = e.target.dataset.action;
+    if (!action) return;
+    $("acctMenu").classList.remove("show");
+    if (action === "logout") {
+      await api("/api/auth/logout", { method: "POST" }).catch(() => {});
+      setUser(null);
+      $("modalBox").innerHTML = formHTML; bindForm(); // clear checkout form
+      toast("You've been logged out");
+    } else {
+      openAccount(action === "orders");
+    }
+  });
+
+  // My account modal
+  async function openAccount(scrollToOrders = false) {
+    try { const { user } = await api("/api/auth/me"); if (!user) { setUser(null); return openAuth("login", "Please log in again."); } setUser(user); } catch {}
+    $("accName").value = currentUser.name;
+    $("accEmail").value = currentUser.email;
+    $("accPhone").value = currentUser.phone;
+    $("accAddress").value = currentUser.address || "";
+    $("profileErr").textContent = $("passErr").textContent = "";
+    $("passForm").reset();
+    $("myOrders").innerHTML = `<p class="hint">Loading…</p>`;
+    $("accountModal").classList.add("show");
+    if (scrollToOrders) setTimeout(() => $("ordersSection").scrollIntoView({ behavior: "smooth" }), 50);
+    try {
+      const orders = await api("/api/account/orders");
+      const label = { new: "Received", preparing: "Preparing", out_for_delivery: "Out for delivery", ready_for_pickup: "Ready for pickup", completed: "Completed", cancelled: "Cancelled" };
+      $("myOrders").innerHTML = orders.length === 0 ? `<p class="hint">No orders yet.</p>` : orders.map(o => `
+        <div class="order-row">
+          <div class="top"><strong>${esc(o.orderNo)} · ${peso(o.total)}</strong><span class="pill ${o.status}">${label[o.status] || o.status}</span></div>
+          <small>${new Date(o.createdAt).toLocaleString()} · ${o.type === "pickup" ? "Pickup" : "Delivery"}</small>
+          <small>${o.items.map(i => `${i.qty}× ${esc(i.name)}`).join(", ")}</small>
+        </div>`).join("");
+    } catch (err) { $("myOrders").innerHTML = `<p class="form-err">${esc(err.message)}</p>`; }
+  }
+
+  $("profileForm").onsubmit = async e => {
+    e.preventDefault();
+    $("profileErr").textContent = "";
+    try {
+      const user = await api("/api/account", { method: "PATCH", body: { name: $("accName").value, phone: $("accPhone").value, address: $("accAddress").value } });
+      setUser(user);
+      toast("Details saved");
+    } catch (err) { $("profileErr").textContent = err.message; }
+  };
+
+  $("passForm").onsubmit = async e => {
+    e.preventDefault();
+    $("passErr").textContent = "";
+    try {
+      await api("/api/account/password", { method: "POST", body: { currentPassword: $("curPass").value, newPassword: $("newPass").value } });
+      $("passForm").reset();
+      toast("Password updated");
+    } catch (err) { $("passErr").textContent = err.message; }
+  };
+
+  // ---- Toast ----
+  let toastTimer;
+  function toast(msg) {
+    $("toast").textContent = msg;
+    $("toast").classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2000);
+  }
+
+  // ---- Init ----
+  $("year").textContent = new Date().getFullYear();
+  bindForm();
+  (async () => {
+    try {
+      MENU = await api("/api/menu");
+      renderTabs(); renderMenu();
+    } catch {
+      $("grid").innerHTML = `<p class="empty">Couldn't load the menu. Is the server running?</p>`;
+    }
+    refreshCart();
+    try { const { user } = await api("/api/auth/me"); setUser(user); } catch {}
+    openFromHash();
+  })();
+</script>
+</body>
+</html>

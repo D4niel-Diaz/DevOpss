@@ -1,0 +1,14 @@
+{
+  "name": "hog-and-mug",
+  "version": "1.4.0",
+  "description": "Food and beverage ordering website with cart and order backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

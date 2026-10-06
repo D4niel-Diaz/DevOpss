@@ -1,0 +1,7 @@
+# Customer data: never commit (contains accounts, orders, addresses)
+data/
+
+node_modules/
+.env
+*.tmp
+.DS_Store

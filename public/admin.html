@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hog & Mug | Orders</title>
+<style>
+  :root { --pink:#f7a8b8; --pink-dark:#e07a93; --brown:#5a3825; --cream:#fff8f0; --line:#f0e2d6; --muted:#7a6a60; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--cream); color: #2e2019; }
+  header { background: var(--brown); color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 1.25rem; }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  select, input, button { font: inherit; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--line); }
+  button { background: var(--pink-dark); color: #fff; border: none; font-weight: 700; cursor: pointer; }
+  main { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+  .login { max-width: 360px; margin: 80px auto; background: #fff; padding: 28px; border-radius: 16px; box-shadow: 0 6px 20px rgba(90,56,37,.1); }
+  .login h2 { color: var(--brown); margin-bottom: 12px; }
+  .login input { width: 100%; margin-bottom: 12px; }
+  .login button { width: 100%; }
+  .stats { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .stat { background: #fff; border-radius: 12px; padding: 12px 18px; box-shadow: 0 2px 8px rgba(90,56,37,.08); }
+  .stat strong { display: block; font-size: 1.3rem; color: var(--brown); }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  .order { background: #fff; border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(90,56,37,.08); border-left: 6px solid var(--pink); }
+  .order.completed, .order.cancelled { opacity: .6; border-left-color: #cbbbb0; }
+  .top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .top h3 { color: var(--brown); }
+  .meta { color: var(--muted); font-size: .9rem; }
+  ul { margin: 10px 0 10px 18px; }
+  .total { font-weight: 800; color: var(--pink-dark); }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+  .err { color: #b3261e; margin-bottom: 10px; }
+  .tabs { display: flex; gap: 6px; }
+  .tabs button { background: transparent; border: 2px solid rgba(255,255,255,.4); }
+  .tabs button.active { background: #fff; color: var(--brown); border-color: #fff; }
+  .search { width: 100%; margin-bottom: 14px; background: #fff; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(90,56,37,.08); }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: .92rem; vertical-align: top; }
+  th { background: #fbf1e8; color: var(--brown); font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+  tr.off td { opacity: .55; }
+  td small { color: var(--muted); display: block; }
+  .tag { font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .tag.on { background: #e3f1dc; color: #3d6b2a; }
+  .tag.off { background: #eee; color: #777; }
+  td button { padding: 6px 12px; font-size: .85rem; }
+  td button.enable { background: #3d6b2a; }
+  .table-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🐷☕ Hog &amp; Mug — Admin</h1>
+  <div class="controls" id="controls" hidden>
+    <div class="tabs">
+      <button class="active" data-view="orders">Orders</button>
+      <button data-view="users">Users</button>
+    </div>
+    <select id="filter">
+      <option value="">All orders</option>
+      <option value="new">New</option>
+      <option value="preparing">Preparing</option>
+      <option value="out_for_delivery">Out for delivery</option>
+      <option value="ready_for_pickup">Ready for pickup</option>
+      <option value="completed">Completed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+    <button id="refresh">Refresh</button>
+    <button id="logout" style="background:transparent;border:2px solid #fff">Log out</button>
+  </div>
+</header>
+
+<div class="login" id="login">
+  <h2>Admin login</h2>
+  <p class="err" id="loginErr"></p>
+  <input id="key" type="password" placeholder="Admin key">
+  <button id="loginBtn">Open orders</button>
+</div>
+
+<main id="main" hidden>
+  <div class="stats" id="stats"></div>
+  <div id="list"></div>
+  <div id="users" hidden>
+    <input class="search" id="userSearch" placeholder="Search by name, email or phone">
+    <div class="table-wrap"><table>
+      <thead><tr><th>Customer</th><th>Phone / Address</th><th>Joined</th><th>Orders</th><th>Spent</th><th>Status</th><th></th></tr></thead>
+      <tbody id="userRows"></tbody>
+    </table></div>
+  </div>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const peso = n => "₱" + Number(n).toLocaleString("en-PH");
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  const STATUSES = { new: "New", preparing: "Preparing", out_for_delivery: "Out for delivery", ready_for_pickup: "Ready for pickup", completed: "Completed", cancelled: "Cancelled" };
+  let key = "";
+  try { key = sessionStorage.getItem("hm_admin_key") || ""; } catch {}
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, { ...opts, headers: { "Content-Type": "application/json", "x-admin-key": key } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw Object.assign(new Error(data.error || "Error"), { status: res.status });
+    return data;
+  }
+
+  let view = "orders";
+  let users = [];
+
+  document.querySelector(".tabs").addEventListener("click", e => {
+    if (!e.target.dataset.view) return;
+    view = e.target.dataset.view;
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+    $("filter").hidden = view !== "orders";
+    $("list").hidden = view !== "orders";
+    $("users").hidden = view !== "users";
+    load();
+  });
+
+  async function load() {
+    try {
+      if (view === "users") {
+        users = await api("/api/admin/users");
+        $("login").hidden = true; $("main").hidden = false; $("controls").hidden = false;
+        return renderUsers();
+      }
+      const status = $("filter").value;
+      const orders = await api("/api/admin/orders" + (status ? "?status=" + status : ""));
+      $("login").hidden = true; $("main").hidden = false; $("controls").hidden = false;
+      render(orders);
+    } catch (e) {
+      if (e.status === 401) { showLogin("Wrong admin key."); } else { $("list").innerHTML = `<p class="empty">${esc(e.message)}</p>`; }
+    }
+  }
+
+  function render(orders) {
+    const open = orders.filter(o => !["completed", "cancelled"].includes(o.status));
+    const today = new Date().toDateString();
+    const todays = orders.filter(o => new Date(o.createdAt).toDateString() === today && o.status !== "cancelled");
+    $("stats").innerHTML = `
+      <div class="stat"><strong>${open.length}</strong><span>Open orders</span></div>
+      <div class="stat"><strong>${todays.length}</strong><span>Orders today</span></div>
+      <div class="stat"><strong>${peso(todays.reduce((s, o) => s + o.total, 0))}</strong><span>Sales today</span></div>`;
+    $("list").innerHTML = orders.length === 0 ? `<p class="empty">No orders yet.</p>` : orders.map(o => `
+      <div class="order ${o.status}">
+        <div class="top">
+          <div>
+            <h3>${esc(o.orderNo)} · ${esc(o.customer.name)}</h3>
+            <div class="meta">${new Date(o.createdAt).toLocaleString()} · ${o.type === "pickup" ? "Pickup" : "Delivery"} · ${esc(o.payment)}</div>
+            <div class="meta">${o.customer.email ? "✉️ " + esc(o.customer.email) + " · " : ""}📞 ${esc(o.customer.phone)}${o.customer.address ? " · 📍 " + esc(o.customer.address) : ""}</div>
+          </div>
+          <select data-id="${o.id}">
+            ${Object.entries(STATUSES).map(([v, l]) => `<option value="${v}"${v === o.status ? " selected" : ""}>${l}</option>`).join("")}
+          </select>
+        </div>
+        <ul>${o.items.map(i => `<li>${i.qty} × ${esc(i.name)} — ${peso(i.lineTotal)}</li>`).join("")}</ul>
+        ${o.notes ? `<div class="meta">📝 ${esc(o.notes)}</div>` : ""}
+        <div class="meta">Subtotal ${peso(o.subtotal)} · Delivery ${peso(o.delivery)} · <span class="total">Total ${peso(o.total)}</span></div>
+      </div>`).join("");
+  }
+
+  function renderUsers() {
+    const active = users.filter(u => !u.disabled).length;
+    const thisMonth = users.filter(u => new Date(u.createdAt).getMonth() === new Date().getMonth() && new Date(u.createdAt).getFullYear() === new Date().getFullYear()).length;
+    $("stats").innerHTML = `
+      <div class="stat"><strong>${users.length}</strong><span>Total users</span></div>
+      <div class="stat"><strong>${active}</strong><span>Active</span></div>
+      <div class="stat"><strong>${thisMonth}</strong><span>New this month</span></div>`;
+    const q = $("userSearch").value.trim().toLowerCase();
+    const list = users.filter(u => !q || [u.name, u.email, u.phone].some(v => (v || "").toLowerCase().includes(q)));
+    $("userRows").innerHTML = list.length === 0
+      ? `<tr><td colspan="7" class="empty">${users.length ? "No matching users." : "No users yet."}</td></tr>`
+      : list.map(u => `
+        <tr class="${u.disabled ? "off" : ""}">
+          <td><strong>${esc(u.name)}</strong><small>${esc(u.email)}</small></td>
+          <td>${esc(u.phone)}<small>${esc(u.address) || "—"}</small></td>
+          <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+          <td>${u.orderCount}${u.lastOrderAt ? `<small>last ${new Date(u.lastOrderAt).toLocaleDateString()}</small>` : ""}</td>
+          <td>${peso(u.totalSpent)}</td>
+          <td><span class="tag ${u.disabled ? "off" : "on"}">${u.disabled ? "Disabled" : "Active"}</span></td>
+          <td><button data-user="${u.id}" data-disable="${!u.disabled}" class="${u.disabled ? "enable" : ""}">${u.disabled ? "Enable" : "Disable"}</button></td>
+        </tr>`).join("");
+  }
+  $("userSearch").addEventListener("input", renderUsers);
+  $("userRows").addEventListener("click", async e => {
+    const id = e.target.dataset.user;
+    if (!id) return;
+    const disable = e.target.dataset.disable === "true";
+    const u = users.find(x => x.id === id);
+    if (disable && !confirm(`Disable ${u.name}'s account? They will be logged out and can't place orders.`)) return;
+    try { await api("/api/admin/users/" + id, { method: "PATCH", body: JSON.stringify({ disabled: disable }) }); load(); }
+    catch (err) { alert(err.message); }
+  });
+
+  $("list").addEventListener("change", async e => {
+    if (!e.target.dataset.id) return;
+    try { await api("/api/admin/orders/" + e.target.dataset.id, { method: "PATCH", body: JSON.stringify({ status: e.target.value }) }); load(); }
+    catch (err) { alert(err.message); }
+  });
+
+  function showLogin(msg = "") {
+    $("login").hidden = false; $("main").hidden = true; $("controls").hidden = true;
+    $("loginErr").textContent = msg;
+  }
+  $("loginBtn").onclick = () => {
+    key = $("key").value;
+    try { sessionStorage.setItem("hm_admin_key", key); } catch {}
+    load();
+  };
+  $("key").addEventListener("keydown", e => { if (e.key === "Enter") $("loginBtn").click(); });
+  $("logout").onclick = () => { key = ""; try { sessionStorage.removeItem("hm_admin_key"); } catch {} showLogin(); };
+  $("filter").onchange = load;
+  $("refresh").onclick = load;
+  setInterval(() => { if (!$("main").hidden) load(); }, 15000); // auto-refresh every 15s
+
+  if (key) load(); else showLogin();
+</script>
+</body>
+</html>
